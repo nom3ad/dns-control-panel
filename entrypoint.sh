@@ -14,7 +14,7 @@ if [ ! -f /config.php ]; then
     [ -z "$ENC_SECRET" ] && {
         if [ ! -f .enc_secret ]; then
             echo "Generating encryptionSecret"
-            openssl rand -hex 16 >.enc_secret
+            head -c 16 /dev/urandom | xxd -p >.enc_secret
         fi
         ENC_SECRET=$(cat .enc_secret)
     }
@@ -62,4 +62,23 @@ HOST="${HOST-0.0.0.0}"
 PORT="${PORT-5380}"
 
 cd /app || exit 2
-exec php83 -S "$HOST:$PORT"
+
+exec 3>&1
+
+mkdir -p /run/lighttpd/
+cat <<EOF >/etc/lighttpd/lighttpd.conf
+server.modules = (
+    "mod_access",
+    "mod_accesslog"
+)
+include "mod_fastcgi.conf"
+server.document-root = "/app"
+server.pid-file      = "/run/lighttpd.pid"
+index-file.names     = ("index.php", "index.html", "index.htm", "default.htm")
+server.errorlog      = "/dev/stderr"
+accesslog.filename   = "/dev/stderr"
+server.port = $PORT
+server.bind = "$HOST"
+EOF
+
+exec lighttpd -D -f /etc/lighttpd/lighttpd.conf
