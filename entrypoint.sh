@@ -1,4 +1,5 @@
 #!/bin/sh
+set -ex
 
 fatal() {
     echo "$*" >&2
@@ -36,8 +37,14 @@ cat <<EOF  >/app/config/config.php
 \$config["zones"] = [
     '$ZONE' => [
         "server" => "$SERVER",
+EOF
+[ -n "$TRANSFER_KEY" ] && cat <<EOF  >>/app/config/config.php
         "transferKey" => '$TRANSFER_KEY',
-        "updateKey" => "$UPDATE_KEY",
+EOF
+[ -n "$UPDATE_KEY" ] && cat <<EOF  >>/app/config/config.php
+        "updateKey" => '$UPDATE_KEY',
+EOF
+cat <<EOF  >>/app/config/config.php
     ],
 ];
 \$config["encryptionSecret"] = "$ENC_SECRET";
@@ -48,7 +55,7 @@ else
     cp /config.php /app/config/config.php
 fi
 
-[ -n $DEBUG ] && cat /app/config/config.php >&2
+[ -n "$DEBUG" ] && cat /app/config/config.php >&2
 
 
 HOST="${HOST-0.0.0.0}"

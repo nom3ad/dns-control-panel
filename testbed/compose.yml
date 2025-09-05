@@ -16,6 +16,7 @@ services:
       SERVER: bind9
       # TRANSFER_KEY: ${TRANSFER_KEY}
       # UPDATE_KEY: ${UPDATE_KEY}
+      DEBUG: 1
 
     volumes:
       - ../entrypoint.sh:/app/entrypoint.sh
