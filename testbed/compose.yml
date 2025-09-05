@@ -1,0 +1,31 @@
+version: "3.8"
+
+name: dns-cp-testbed
+
+services:
+  dns-control-panel:
+    image: dns-control-panel-php
+    ports:
+      - "5380:5380"
+    depends_on:
+      - bind9
+    environment:
+      ZONE: example.com
+      USERNAME: admin
+      PASSWORD: "123"
+      SERVER: bind9
+      # TRANSFER_KEY: ${TRANSFER_KEY}
+      # UPDATE_KEY: ${UPDATE_KEY}
+
+    volumes:
+      - ../entrypoint.sh:/app/entrypoint.sh
+
+  bind9:
+    image: internetsystemsconsortium/bind9:9.20
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+      - "953:953/tcp"
+    volumes:
+      - ./named.conf:/etc/bind/named.conf
+      - ./db.example.com:/var/lib/bind/db.example.com
