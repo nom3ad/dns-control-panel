@@ -9,7 +9,7 @@ fatal() {
 if [ ! -f /config.php ]; then
     USERNAME=${USERNAME:-'admin'}
     PASSWORD=${PASSWORD:-'123'}
-    [ -z "$ZONE" ] && fatal "missing config: ZONE"
+    [ -z "$ZONES" ] && fatal "missing config: ZONES"
     [ -z "$SERVER" ] && fatal "missing config: SERVER"
     [ -z "$ENC_SECRET" ] && {
         if [ ! -f .enc_secret ]; then
@@ -30,22 +30,28 @@ cat <<EOF  >/app/config/config.php
 \$config["user"] = [
     '$USERNAME' => [
         "password" => '$HASHED_PASSWORD',
-        "zones" => ['$ZONE'],
+        "zones" => ['$(echo "$ZONES" | sed -e "s/,/','/g")'],
         "defaultTtl" => 3600,
     ],
 ];
 \$config["zones"] = [
-    '$ZONE' => [
+EOF
+
+for zone in $(echo "$ZONES" | sed -e "s/,/ /g"); do
+    cat <<EOF  >>/app/config/config.php
+    '$zone' => [
         "server" => "$SERVER",
 EOF
-[ -n "$TRANSFER_KEY" ] && cat <<EOF  >>/app/config/config.php
+    [ -n "$TRANSFER_KEY" ] && cat <<EOF  >>/app/config/config.php
         "transferKey" => '$TRANSFER_KEY',
 EOF
-[ -n "$UPDATE_KEY" ] && cat <<EOF  >>/app/config/config.php
+    [ -n "$UPDATE_KEY" ] && cat <<EOF  >>/app/config/config.php
         "updateKey" => '$UPDATE_KEY',
 EOF
+    echo '    ],'>>/app/config/config.php
+done
+
 cat <<EOF  >>/app/config/config.php
-    ],
 ];
 \$config["encryptionSecret"] = "$ENC_SECRET";
 EOF
